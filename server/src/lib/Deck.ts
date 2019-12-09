@@ -1,4 +1,4 @@
-import { Card, SuiteColors } from './';
+import { Card, SuiteColors, getSuiteFromColor } from './';
 
 export interface IDeck {
   cards: Card[];
@@ -11,25 +11,16 @@ export class Deck implements IDeck {
     // tslint:disable-next-line: forin
     for (const color in SuiteColors) {
       for (let i = 0; i < 3; i++) {
-        this.cards.push({
-          num: 1,
-          color
-        });
+        this.cards.push(new Card(getSuiteFromColor(color), 1));
       }
 
       for (let c = 2; c < 5; c++) {
         for (let z = 0; z < 2; z++) {
-          this.cards.push({
-            num: c,
-            color
-          });
+          this.cards.push(new Card(getSuiteFromColor(color), c));
         }
       }
 
-      this.cards.push({
-        num: 5,
-        color
-      });
+      this.cards.push(new Card(getSuiteFromColor(color), 5));
     }
   }
 
