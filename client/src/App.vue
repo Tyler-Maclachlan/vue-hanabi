@@ -30,12 +30,12 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { Deck } from '@/lib';
+import { Deck, createSocket } from '@/lib';
 
 @Component
 export default class App extends Vue {
   public mounted() {
-    console.log(new Deck({ noWilds: true }));
+    const socket = createSocket();
   }
 }
 </script>

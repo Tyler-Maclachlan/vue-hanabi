@@ -4,10 +4,9 @@ export class Player {
   public id: string;
   public username: string;
   public cards: Card[] = [];
-  public socketID: any;
 
-  public constructor(username: string) {
-    this.id = new Date().toString();
+  public constructor(username: string, socketID: string) {
+    this.id = socketID;
     this.username = username;
   }
 }

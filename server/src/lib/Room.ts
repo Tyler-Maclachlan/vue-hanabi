@@ -1,6 +1,12 @@
 import { Player, Deck, Card, SuiteColors } from './';
 
+export interface Clue {
+  num?: number;
+  color?: SuiteColors;
+}
+
 export class Room {
+  private _id: string;
   private _name: string;
   private _players: Map<string, Player>;
   private _deck: Deck;
@@ -10,11 +16,19 @@ export class Room {
   private _gameStarted = false;
   private _discards: Card[] = [];
   private _played: Map<SuiteColors, Card[]>;
+  private _owner: Player;
+  private turnsToEnd = 0;
 
-  public constructor() {
+  public constructor(name = new Date().getTime() + '') {
+    this._id = `Room:${new Date().getTime() + Math.random() * 100}`;
+    this._name = name;
     this._players = new Map();
     this._deck = new Deck({});
     this._played = new Map();
+  }
+
+  public get name() {
+    return this._name;
   }
 
   public get players() {
@@ -45,7 +59,14 @@ export class Room {
     return this._currentPlayer;
   }
 
+  public get owner() {
+    return this._owner;
+  }
+
   public addPlayer(player: Player): void {
+    if (this._players.size === 0) {
+      this._owner = player;
+    }
     this._players.set(player.id, player);
   }
 
@@ -55,30 +76,43 @@ export class Room {
     }
   }
 
-  public startGame(): void {
-    this._currentPlayer = this._players.get(this._players.keys[0]);
+  public startGame(player: Player): boolean {
+    if (player.id === this._owner.id) {
+      this._currentPlayer = this._players.get(this._players.keys[0]);
 
-    for (const playerID in this.players) {
-      const cardCount = this._players.size < 4 ? 5 : 4;
-      const player = this._players.get(playerID);
+      for (const playerID in this.players) {
+        const cardCount = this._players.size < 4 ? 5 : 4;
+        const player = this._players.get(playerID);
 
-      for (let i = 0; i < cardCount; i++) {
-        player.cards.push(this._deck.drawCard());
+        for (let i = 0; i < cardCount; i++) {
+          player.cards.push(this._deck.drawCard());
+        }
       }
+
+      this.turnsToEnd = this._players.size;
+      this._gameStarted = true;
+      return true;
     }
 
-    this._gameStarted = true;
+    return false;
   }
 
-  public nextTurn() {
-    const playerIDs = Array.from(this._players.keys());
-    const index = playerIDs.findIndex(id => id === this._currentPlayer.id);
+  public nextTurn(player: Player) {
+    if (player.id === this._currentPlayer.id) {
+      const playerIDs = Array.from(this._players.keys());
+      const index = playerIDs.findIndex(id => id === this._currentPlayer.id);
 
-    if (index + 1 > playerIDs.length) {
-      this._currentPlayer = this._players.get(playerIDs[0]);
-    } else {
-      this._currentPlayer = this._players.get(playerIDs[index + 1]);
+      if (index + 1 > playerIDs.length) {
+        this._currentPlayer = this._players.get(playerIDs[0]);
+      } else {
+        this._currentPlayer = this._players.get(playerIDs[index + 1]);
+      }
+      if (player.cards.length < (this._players.size < 4 ? 5 : 4)) {
+        player.cards.push(this._deck.drawCard());
+      }
+      return true;
     }
+    return false;
   }
 
   public getCard(playerID: string) {
@@ -114,19 +148,22 @@ export class Room {
     this.removeCard(card, playerID, !valid);
   }
 
-  public giveClue(playerID: string, options: { num?: number; color?: SuiteColors }) {
-    if (this._cluesAvailable > 0) {
+  public giveClue(player: Player, playerID: string, clue: Clue) {
+    if (this._cluesAvailable > 0 && player.id === this._currentPlayer.id) {
       const player = this._players.get(playerID);
       player.cards.forEach(c => {
-        if (options.num && c.num === options.num) {
+        if (clue.num && c.num === clue.num) {
           c.clued.num = true;
-        } else if (options.color && c.color === options.color) {
+        } else if (clue.color && c.color === clue.color) {
           c.clued.color = true;
         }
       });
 
       this._cluesAvailable--;
+      return true;
     }
+
+    return false;
   }
 
   public discard(card: Card, playerID: string) {

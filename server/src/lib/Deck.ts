@@ -24,11 +24,15 @@ export class Deck implements IDeck {
     }
   }
 
-  public drawCard(): Card {
-    const index = Math.ceil(Math.random() * this.cards.length);
-    const card = this.cards[index];
-    this.cards = this.cards.splice(index, 1);
+  public drawCard(): Card | null {
+    if (this.cards.length) {
+      const index = Math.ceil(Math.random() * this.cards.length);
+      const card = this.cards[index];
+      this.cards = this.cards.splice(index, 1);
 
-    return card;
+      return card;
+    }
+
+    return null;
   }
 }
